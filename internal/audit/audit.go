@@ -2,6 +2,7 @@ package audit
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
@@ -26,8 +27,10 @@ func Run(options Options) (string, error) {
 		cwd = "."
 	}
 
-	configPath := ResolveConfigPath(options.Args)
-	config, err := LoadConfig(configPath, cwd)
+	config, err := ParseConfig(options.Args)
+	if errors.Is(err, errHelp) {
+		return HelpText(), nil
+	}
 	if err != nil {
 		return "", err
 	}

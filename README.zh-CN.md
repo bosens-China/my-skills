@@ -2,7 +2,7 @@
 
 [English](./README.md)
 
-一个专门为 Agent Skills 设计的工具，用于审计仓库中超过 400 行（默认）的源代码文件。你可以通过创建本地配置文件来灵活自定义审查阈值和扫描模式。
+一个专门为 Agent Skills 设计的工具，用于审计仓库中超过指定行数阈值的源代码文件。Agent 通过命令行参数直接传入扫描范围，不再依赖默认配置文件。
 
 ## 安装
 
@@ -12,9 +12,37 @@
 npx skills add bosens-China/file-line-audit
 ```
 
-## 自定义配置
+## 使用方式
 
-如果需要修改默认的 400 行阈值或扫描范围，请参考 [示例配置](./.agents/skills/file-line-audit/assets/default-config.json) 在项目根目录创建 `.line-audit.json` 文件。
+在仓库根目录运行打包好的二进制，并显式传入扫描参数：
+
+```bash
+line-audit \
+  --threshold 400 \
+  --include "src/**/*.{ts,tsx,js,jsx,vue}" \
+  --include "apps/**/*.{ts,tsx,js,jsx,vue}" \
+  --exclude "dist/" \
+  --exclude "build/"
+```
+
+也可以直接传入 JSON 对象：
+
+```bash
+line-audit --json '{
+  "threshold": 400,
+  "include": ["src/**/*.go", "internal/**/*.go"],
+  "exclude": ["vendor/"]
+}'
+```
+
+### 参数说明
+
+- `--include` / `-i`：必填，glob 匹配模式；可重复传入多个
+- `--exclude` / `-e`：可选，额外排除规则，语法与 `.gitignore` 一致
+- `--threshold` / `-t`：输出阈值，默认 `400`
+- `--json` / `-j`：可选，传入包含 `threshold`、`include`、`exclude` 的 JSON 对象
+
+仓库中的 `.gitignore` 规则始终生效，额外 `--exclude` 规则会在其后继续过滤。
 
 ## 开源协议
 

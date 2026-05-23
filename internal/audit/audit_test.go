@@ -68,21 +68,20 @@ func TestAuditRespectsGitIgnoreIncludeAndExclude(t *testing.T) {
 	}
 }
 
-func TestRunReadsConfigFile(t *testing.T) {
+func TestRunUsesCLIArgs(t *testing.T) {
 	t.Parallel()
 
 	root := t.TempDir()
-	mustWriteFile(t, filepath.Join(root, DefaultConfigPath), `{
-  "threshold": 3,
-  "include": ["src/**/*.py"],
-  "exclude": ["src/generated/"]
-}`)
 	mustWriteFile(t, filepath.Join(root, "src", "app.py"), "1\n2\n3\n4\n")
 	mustWriteFile(t, filepath.Join(root, "src", "generated", "skip.py"), "1\n2\n3\n4\n5\n")
 
 	report, err := Run(Options{
-		Args: []string{"--config", DefaultConfigPath},
-		Cwd:  root,
+		Args: []string{
+			"--threshold", "3",
+			"--include", "src/**/*.py",
+			"--exclude", "src/generated/",
+		},
+		Cwd: root,
 	})
 	if err != nil {
 		t.Fatalf("Run returned error: %v", err)

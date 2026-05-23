@@ -1,67 +1,31 @@
 package audit
 
 import (
-	"os"
-	"path/filepath"
+	"errors"
 	"reflect"
 	"testing"
 )
 
-func TestResolveConfigPath(t *testing.T) {
+func TestParseConfigRequiresInclude(t *testing.T) {
 	t.Parallel()
 
-	if got := ResolveConfigPath([]string{"--config", "custom.json"}); got != "custom.json" {
-		t.Fatalf("expected custom.json, got %q", got)
-	}
-
-	if got := ResolveConfigPath([]string{"-c", "alt.json"}); got != "alt.json" {
-		t.Fatalf("expected alt.json, got %q", got)
-	}
-
-	if got := ResolveConfigPath(nil); got != DefaultConfigPath {
-		t.Fatalf("expected %q, got %q", DefaultConfigPath, got)
+	if _, err := ParseConfig(nil); err == nil {
+		t.Fatal("expected include required error")
 	}
 }
 
-func TestLoadConfigDefaults(t *testing.T) {
+func TestParseConfigReadsFlags(t *testing.T) {
 	t.Parallel()
 
-	dir := t.TempDir()
-	config, err := LoadConfig(DefaultConfigPath, dir)
+	config, err := ParseConfig([]string{
+		"--threshold", "128",
+		"--include", "src/**/*.go",
+		"--include", "apps/**/*.{ts,tsx}",
+		"--exclude", "dist/",
+		"--exclude", "*.snap",
+	})
 	if err != nil {
-		t.Fatalf("LoadConfig returned error: %v", err)
-	}
-
-	if config.Threshold != DefaultThreshold {
-		t.Fatalf("expected threshold %d, got %d", DefaultThreshold, config.Threshold)
-	}
-
-	if !reflect.DeepEqual(config.Include, DefaultInclude) {
-		t.Fatalf("unexpected default include patterns: %#v", config.Include)
-	}
-
-	if !reflect.DeepEqual(config.Exclude, DefaultExclude) {
-		t.Fatalf("unexpected default exclude patterns: %#v", config.Exclude)
-	}
-}
-
-func TestLoadConfigReadsCustomFields(t *testing.T) {
-	t.Parallel()
-
-	dir := t.TempDir()
-	configPath := filepath.Join(dir, DefaultConfigPath)
-	content := []byte(`{
-  "threshold": 128,
-  "include": ["src/**/*.go", "apps/**/*.{ts,tsx}"],
-  "exclude": ["dist/", "*.snap"]
-}`)
-	if err := os.WriteFile(configPath, content, 0o644); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
-	}
-
-	config, err := LoadConfig(DefaultConfigPath, dir)
-	if err != nil {
-		t.Fatalf("LoadConfig returned error: %v", err)
+		t.Fatalf("ParseConfig returned error: %v", err)
 	}
 
 	if config.Threshold != 128 {
@@ -79,19 +43,46 @@ func TestLoadConfigReadsCustomFields(t *testing.T) {
 	}
 }
 
-func TestLoadConfigRejectsInvalidIncludePattern(t *testing.T) {
+func TestParseConfigReadsJSON(t *testing.T) {
 	t.Parallel()
 
-	dir := t.TempDir()
-	configPath := filepath.Join(dir, DefaultConfigPath)
-	content := []byte(`{
-  "include": ["src/**["]
-}`)
-	if err := os.WriteFile(configPath, content, 0o644); err != nil {
-		t.Fatalf("WriteFile returned error: %v", err)
+	config, err := ParseConfig([]string{
+		"--json", `{"threshold":256,"include":["internal/**/*.go"],"exclude":["vendor/"]}`,
+	})
+	if err != nil {
+		t.Fatalf("ParseConfig returned error: %v", err)
 	}
 
-	if _, err := LoadConfig(DefaultConfigPath, dir); err == nil {
+	if config.Threshold != 256 {
+		t.Fatalf("expected threshold 256, got %d", config.Threshold)
+	}
+
+	wantInclude := []string{"internal/**/*.go"}
+	if !reflect.DeepEqual(config.Include, wantInclude) {
+		t.Fatalf("unexpected include patterns: %#v", config.Include)
+	}
+
+	wantExclude := []string{"vendor/"}
+	if !reflect.DeepEqual(config.Exclude, wantExclude) {
+		t.Fatalf("unexpected exclude patterns: %#v", config.Exclude)
+	}
+}
+
+func TestParseConfigRejectsInvalidIncludePattern(t *testing.T) {
+	t.Parallel()
+
+	if _, err := ParseConfig([]string{
+		"--include", "src/**[",
+	}); err == nil {
 		t.Fatal("expected invalid include pattern error")
+	}
+}
+
+func TestParseConfigShowsHelp(t *testing.T) {
+	t.Parallel()
+
+	_, err := ParseConfig([]string{"--help"})
+	if !errors.Is(err, errHelp) {
+		t.Fatalf("expected help error, got %v", err)
 	}
 }
