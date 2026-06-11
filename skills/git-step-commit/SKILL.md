@@ -30,6 +30,7 @@ description: Analyze Git working tree and staged changes, propose one or more co
    git restore --staged .
    ```
    这不会丢弃文件内容，只是为了后续按批次重新暂存。
+   如果 `git status --short` 显示所有更改都在暂存区，也同样先退回工作区，再按计划重新分批暂存。
 4. 查看最近提交信息，推断仓库的提交风格：
    ```bash
    git log -12 --pretty=format:%s
@@ -43,6 +44,10 @@ description: Analyze Git working tree and staged changes, propose one or more co
    - `docs: ...` 用于文档变更
    - `chore: ...` 用于工具、CI、依赖、生成产物或仓库维护
 6. 如果用户指定了提交格式、语言、前缀或消息风格，后续都按用户指定的方式执行，除非用户之后又修改要求。
+7. 确认测试状态：
+   - 如果本轮对话已经运行过相关测试或验证，在提交大纲中复述测试命令和结果。
+   - 如果还没有运行测试，判断是否需要先运行；需要且成本合理时先运行。
+   - 如果不运行测试，在提交大纲和最终回复中说明原因。
 
 ## 提交大纲
 
@@ -50,6 +55,10 @@ description: Analyze Git working tree and staged changes, propose one or more co
 
 ```text
 建议提交计划：
+变更来源：本轮 agent 修改 / 用户已有修改 / 混合 / 不确定
+额外阅读：已了解修改意图，未重复阅读文件 / 已阅读 diff / 已阅读相关文件
+验证状态：已运行 <command> / 建议先运行 <command> / 未运行，原因：...
+
 1. <commit message>
    - 文件：path/a, path/b
    - 目的：...
@@ -114,12 +123,13 @@ description: Analyze Git working tree and staged changes, propose one or more co
    git add <path>...
    ```
    如果同一个文件包含多个无关 hunk，使用 `git add -p` 拆分。
-2. 检查本批次暂存内容：
+2. 检查本批次暂存内容，并确认只包含当前批次：
    ```bash
    git diff --cached --stat
    git diff --cached --name-status
    ```
-3. 提交：
+   如果暂存内容包含其他批次或无关文件，先修正暂存区，不要继续提交。
+3. 提交。提交命令应在暂存检查之后单独执行，不要把 `git add`、检查命令和 `git commit` 串成一条不可中断的命令：
    ```bash
    git commit -m "<message>"
    ```
