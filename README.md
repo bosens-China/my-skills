@@ -13,7 +13,7 @@
 ## 使用方式
 
 ```sh
-npx skills bosens-China/my-skills
+npx skills add bosens-China/my-skills
 ```
 
 ## 协议
