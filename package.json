@@ -1,12 +1,12 @@
 {
-  "name": "file-line-audit",
+  "name": "my-skills",
   "version": "0.3.0",
   "private": true,
   "author": "yliu",
   "license": "MIT",
   "scripts": {
-    "test": "go test ./...",
-    "line:audit": "go run ./cmd/line-audit",
-    "build:skill": "powershell -ExecutionPolicy Bypass -File ./scripts/build-skill.ps1"
+    "test": "go -C packages/file-line-audit test ./...",
+    "line:audit": "go -C packages/file-line-audit run ./cmd/line-audit",
+    "build:file-line-audit": "powershell -ExecutionPolicy Bypass -File ./packages/file-line-audit/scripts/build-skill.ps1"
   }
 }

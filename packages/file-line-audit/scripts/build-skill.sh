@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-output_dir="$repo_root/.agents/skills/file-line-audit/scripts"
+package_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+repo_root="$(cd "$package_root/../.." && pwd)"
+output_dir="$repo_root/skills/file-line-audit/scripts"
 
 mkdir -p "$output_dir"
 
@@ -13,7 +14,7 @@ build_target() {
   GOOS="$goos" GOARCH="$goarch" go build -o "$output_dir/$output" ./cmd/line-audit
 }
 
-cd "$repo_root"
+cd "$package_root"
 
 build_target windows amd64 line-audit-windows-amd64.exe
 build_target linux amd64 line-audit-linux-amd64

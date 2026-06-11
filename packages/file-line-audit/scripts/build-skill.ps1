@@ -1,8 +1,9 @@
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
 
-$repoRoot = Split-Path -Parent $PSScriptRoot
-$outputDir = Join-Path $repoRoot ".agents\skills\file-line-audit\scripts"
+$packageRoot = Split-Path -Parent $PSScriptRoot
+$repoRoot = Split-Path -Parent (Split-Path -Parent $packageRoot)
+$outputDir = Join-Path $repoRoot "skills\file-line-audit\scripts"
 
 New-Item -ItemType Directory -Force -Path $outputDir | Out-Null
 
@@ -18,7 +19,9 @@ foreach ($target in $targets) {
   $env:GOOS = $target.GOOS
   $env:GOARCH = $target.GOARCH
   $outputPath = Join-Path $outputDir $target.Output
+  Push-Location $packageRoot
   & go build -o $outputPath ./cmd/line-audit
+  Pop-Location
 }
 
 Remove-Item Env:GOOS -ErrorAction SilentlyContinue

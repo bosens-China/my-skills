@@ -25,10 +25,12 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: packages/file-line-audit/go.mod
           cache: true # 开启 Go 依赖缓存
+          cache-dependency-path: packages/file-line-audit/go.sum
 
       - name: Run tests
+        working-directory: packages/file-line-audit
         run: go test -v ./...
 
   refresh-skill-binaries:
@@ -44,13 +46,14 @@ jobs:
       - name: Setup Go
         uses: actions/setup-go@v5
         with:
-          go-version-file: go.mod
+          go-version-file: packages/file-line-audit/go.mod
           cache: true
+          cache-dependency-path: packages/file-line-audit/go.sum
 
       - name: Rebuild packaged binaries
         run: |
-          chmod +x ./scripts/build-skill.sh
-          ./scripts/build-skill.sh
+          chmod +x ./packages/file-line-audit/scripts/build-skill.sh
+          ./packages/file-line-audit/scripts/build-skill.sh
 
       - name: Commit and Push changes
         run: |

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/bosens-china/file-line-audit/internal/audit"
+	"github.com/bosens-china/my-skills/packages/file-line-audit/internal/audit"
 )
 
 func main() {

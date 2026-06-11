@@ -1,4 +1,4 @@
-module github.com/bosens-china/file-line-audit
+module github.com/bosens-china/my-skills/packages/file-line-audit
 
 go 1.25.5
 
