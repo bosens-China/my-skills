@@ -116,24 +116,51 @@ description: Analyze Git working tree and staged changes, propose one or more co
 
 用户确认后，按确认的批次顺序执行。
 
-每一批：
+目标是少交互、少工具调用地完成“按计划分批提交”。默认使用紧凑命令链，不要为了重复确认而拆成多次工具调用。
 
-1. 暂存当前批次的文件或 hunk：
+每一批默认执行：
+
+```bash
+git add <path>... && git commit -m "<message>" && git status --short
+```
+
+如果需要在提交前保留暂存摘要，可以使用：
+
+```bash
+git add <path>... && git diff --cached --stat && git commit -m "<message>" && git status --short
+```
+
+Windows PowerShell 可使用：
+
+```powershell
+git add <path>...; if ($LASTEXITCODE -eq 0) { git commit -m "<message>" }; if ($LASTEXITCODE -eq 0) { git status --short }
+```
+
+只在以下情况拆开执行并检查暂存内容：
+
+- 同一个文件包含多个无关 hunk，需要 `git add -p`。
+- 变更来源不明确，或包含用户已有修改和 agent 修改的混合内容。
+- 批次文件很多，容易误包含无关文件。
+- 用户明确要求提交前展示暂存内容。
+- 上一次提交失败、hook 修改了文件，或状态输出和计划不一致。
+
+拆开执行时，使用：
+
+1. 暂存当前批次：
    ```bash
    git add <path>...
    ```
-   如果同一个文件包含多个无关 hunk，使用 `git add -p` 拆分。
-2. 检查本批次暂存内容，并确认只包含当前批次：
+2. 检查暂存内容：
    ```bash
    git diff --cached --stat
    git diff --cached --name-status
    ```
    如果暂存内容包含其他批次或无关文件，先修正暂存区，不要继续提交。
-3. 提交。提交命令应在暂存检查之后单独执行，不要把 `git add`、检查命令和 `git commit` 串成一条不可中断的命令：
+3. 提交：
    ```bash
    git commit -m "<message>"
    ```
-4. 查看剩余状态：
+4. 查看状态：
    ```bash
    git status --short
    ```
