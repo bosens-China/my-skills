@@ -44,7 +44,8 @@ description: Analyze Git working tree and staged changes, propose one or more co
    - `docs: ...` 用于文档变更
    - `chore: ...` 用于工具、CI、依赖、生成产物或仓库维护
 6. 如果用户指定了提交格式、语言、前缀或消息风格，后续都按用户指定的方式执行，除非用户之后又修改要求。
-7. 确认测试状态：
+7. **默认不添加任何协作者/署名 trailer**（如 `Co-authored-by:`、`Co-Authored-By: Claude`、Codex 等 AI 协作署名）。提交信息只写改动本身。仅当用户在本轮明确要求加入协作者时才添加，并使用用户给出的署名。在提交大纲里用一行明示当前是否加协作者，便于用户在确认前修改。
+8. 确认测试状态：
    - 如果本轮对话已经运行过相关测试或验证，在提交大纲中复述测试命令和结果。
    - 如果还没有运行测试，判断是否需要先运行；需要且成本合理时先运行。
    - 如果不运行测试，在提交大纲和最终回复中说明原因。
@@ -58,6 +59,7 @@ description: Analyze Git working tree and staged changes, propose one or more co
 变更来源：本轮 agent 修改 / 用户已有修改 / 混合 / 不确定
 额外阅读：已了解修改意图，未重复阅读文件 / 已阅读 diff / 已阅读相关文件
 验证状态：已运行 <command> / 建议先运行 <command> / 未运行，原因：...
+协作者：默认不添加（如需加入 Co-authored-by 请说明）
 
 1. <commit message>
    - 文件：path/a, path/b
@@ -172,6 +174,7 @@ git add <path>...; if ($LASTEXITCODE -eq 0) { git commit -m "<message>" }; if ($
 - 不要使用 `git reset --hard`、`git checkout -- <path>`、`git clean` 这类会丢弃内容的命令，除非用户明确要求。
 - 不要改写历史、amend、rebase 或 force push，除非用户明确要求。
 - 不要提交密钥、凭据、本地缓存、编辑器文件或非预期构建产物。
+- 不要默认添加 `Co-authored-by:` 或任何 AI 协作署名（Claude、Codex 等）；仅在用户明确要求时按用户给出的署名添加。
 - 测试相关且成本合理时，在提交前或最终提交前运行测试；如果没有运行测试，最终回复要说明。
 - 如果 commit hook 修改了文件，检查新增 diff；如果属于本批次，重新暂存并重试同一提交。
 
