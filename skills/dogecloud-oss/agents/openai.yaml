@@ -1,0 +1,4 @@
+interface:
+  display_name: "多吉云 OSS"
+  short_description: "编写多吉云 OSS SDK、上传与文件管理接入代码"
+  default_prompt: "Use $dogecloud-oss to integrate DogeCloud OSS SDK and upload capabilities into this codebase."

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Spug 短信接入"
+  short_description: "辅助在现有项目中快速编写 Spug 模板短信接入代码"
+  default_prompt: "使用 $spug-sms 为当前项目编写 Spug 模板短信接入代码。"
