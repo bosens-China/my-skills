@@ -4,7 +4,13 @@ on:
   push:
     branches:
       - main
+    paths:
+      - packages/file-line-audit/**
+      - .github/workflows/ci.yml
   pull_request:
+    paths:
+      - packages/file-line-audit/**
+      - .github/workflows/ci.yml
   workflow_dispatch:
 
 # 并发控制：如果同一分支有新的任务启动，则取消正在运行的旧任务
