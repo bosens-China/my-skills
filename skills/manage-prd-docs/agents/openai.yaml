@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manage PRD Docs"
+  short_description: "Turn confirmed product requirements into phased PRD docs"
+  default_prompt: "Use $manage-prd-docs to discuss this product requirement and, once confirmed, organize it into phased PRD and todo documents."

@@ -10,6 +10,7 @@
 | [dogecloud-oss](./skills/dogecloud-oss/)                     | 编写多吉云 OSS SDK、文件上传、图床和文件管理接入代码。            |
 | [file-line-audit](./skills/file-line-audit/)                 | 扫描仓库中的源码文件，找出达到指定行数阈值的超长文件。           |
 | [git-step-commit](./skills/git-step-commit/)                 | 分析 Git 更改，先给出分批提交计划，再按用户确认的批次提交。      |
+| [manage-prd-docs](./skills/manage-prd-docs/)                 | 讨论并将成型的产品需求按迭代阶段落盘，持续维护 PRD 与 Todo。     |
 | [spug-sms](./skills/spug-sms/)                               | 编写 Spug 短信发送、状态查询、发送记录与错误处理接入代码。        |
 
 ## 使用方式
