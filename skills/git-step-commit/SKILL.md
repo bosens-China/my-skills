@@ -1,6 +1,6 @@
 ---
 name: git-step-commit
-description: Analyze Git working tree and staged changes, split them into coherent commits, infer message style from repository history, and execute safely. By default propose a plan and wait for approval; when the user explicitly delegates with phrases such as “按推荐提交”, “你决定并直接提交”, or “无需确认”, skip the displayed plan and make all recommended commits directly. Use when the user asks for git commit, commit changes, git 分步提交, 分批提交, staged commit cleanup, or wants current changes committed with sensible messages.
+description: Analyze Git working tree and staged changes, split them into coherent commits, infer message style from repository history, optionally add GitHub issue-closing keywords supplied by the user, and execute safely. By default propose a plan and wait for approval; when the user explicitly delegates with phrases such as “按推荐提交”, “你决定并直接提交”, or “无需确认”, skip the displayed plan and make all recommended commits directly. Use when the user asks for git commit, commit changes, git 分步提交, 分批提交, staged commit cleanup, wants current changes committed with sensible messages, or asks a commit to close GitHub issues.
 ---
 
 # Git Step Commit
@@ -47,6 +47,7 @@ git log -12 --pretty=format:%s 2>/dev/null || true
 变更来源：本轮 agent 修改 / 用户已有修改 / 混合 / 不确定
 验证状态：已运行 <command> / 建议先运行 <command> / 未运行，原因：...
 协作者：默认不添加
+Issue：默认不关闭；如需在提交进入默认分支后自动关闭，请回复编号（如 #12、#34；多批提交可注明对应批次）。
 执行方式：确认后用一次命令链完成全部批次
 
 1. <commit message>
@@ -60,6 +61,15 @@ git log -12 --pretty=format:%s 2>/dev/null || true
 ```
 
 用户确认全部或说“按推荐提交”后直接执行；只确认部分时只提交指定批次，其他更改保持不动。
+
+## 关闭 GitHub Issues
+
+- 默认不关闭 Issue。只使用用户明确给出的编号，不根据 diff、分支名或提交内容猜测。
+- 同仓库编号使用 `#123`，跨仓库编号保留 `owner/repository#123`；忽略重复编号，拒绝无效编号。
+- 单批提交时把全部编号放入该提交。多批提交时优先使用用户指定的归属；未指定且关联明确时放入最相关批次，无法判断时先询问。
+- 使用独立的 commit body，不改变仓库原有的标题风格：`git commit -m "<message>" -m "Closes #12"`。多个 Issue 写成 `Closes #12, closes #34`，每个编号都带关闭关键字。
+- 关闭动作在包含该 commit 的更改进入 GitHub 默认分支后发生，不要声称本地提交已经关闭 Issue。
+- 推荐直提模式只处理用户事先提供的编号，不为询问 Issue 而打断执行。默认模式下，用户只回复编号视为补充计划；除非同时确认提交，否则继续等待确认。
 
 ## 划分批次
 
@@ -76,14 +86,14 @@ git log -12 --pretty=format:%s 2>/dev/null || true
 
 ```bash
 git add -A -- <batch-1-paths> \
-  && git commit --only -m "<message-1>" -- <batch-1-paths> \
+  && git commit --only -m "<message-1>" -m "Closes #<issue>" -- <batch-1-paths> \
   && git add -A -- <batch-2-paths> \
   && git commit --only -m "<message-2>" -- <batch-2-paths> \
   && git status --short \
   && git log -2 --pretty=format:'%h %s'
 ```
 
-按批次数量调整 `git log -N`。正确引用所有路径和消息，在 pathspec 前使用 `--`；不要使用无 pathspec 的 `git add .` 或 `git add -A`。
+没有关联 Issue 的批次省略第二个 `-m`。按批次数量调整 `git log -N`。正确引用所有路径和消息，在 pathspec 前使用 `--`；不要使用无 pathspec 的 `git add .` 或 `git add -A`。
 
 `git commit --only -- <paths>` 只提交指定路径，并保留其他已暂存文件。前置的精确 `git add -A -- <paths>` 会提交这些路径的完整当前状态，因此仅在整文件属于本批时使用。
 
@@ -99,20 +109,20 @@ git add -A -- <batch-1-paths> \
 git add -A -- <paths>...
 git diff --cached --stat -- <paths>...
 git diff --cached --name-status -- <paths>...
-git commit --only -m "<message>" -- <paths>...
+git commit --only -m "<message>" -m "Closes #<issue>" -- <paths>...
 git status --short
 ```
 
-需要选择 hunk 时，先确保当前提交能独占暂存区：
+没有关联 Issue 时省略第二个 `-m`。需要选择 hunk 时，先确保当前提交能独占暂存区：
 
 ```bash
 git add -p -- <paths>...
 git diff --cached
-git commit -m "<message>"
+git commit -m "<message>" -m "Closes #<issue>"
 git status --short
 ```
 
-不要给 hunk 提交添加 pathspec 或 `--only`，否则会忽略 hunk 选择并提交指定路径的完整工作区内容。若暂存区还有需要保留的其他更改，不要静默清空；先征求用户同意再重组，或使用临时 index。
+没有关联 Issue 时省略第二个 `-m`。不要给 hunk 提交添加 pathspec 或 `--only`，否则会忽略 hunk 选择并提交指定路径的完整工作区内容。若暂存区还有需要保留的其他更改，不要静默清空；先征求用户同意再重组，或使用临时 index。
 
 ## 安全与结果
 
