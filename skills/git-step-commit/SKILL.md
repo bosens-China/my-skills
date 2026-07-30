@@ -1,6 +1,6 @@
 ---
 name: git-step-commit
-description: Analyze Git working tree and staged changes, split them into coherent commits, infer message style from repository history, optionally add GitHub issue-closing keywords supplied by the user, and execute safely. By default propose a plan and wait for approval; when the user explicitly delegates with phrases such as “按推荐提交”, “你决定并直接提交”, or “无需确认”, skip the displayed plan and make all recommended commits directly. Use when the user asks for git commit, commit changes, git 分步提交, 分批提交, staged commit cleanup, wants current changes committed with sensible messages, or asks a commit to close GitHub issues.
+description: Analyze Git working tree and staged changes, split them into coherent commits, infer both message language and format from the current Git author's own history before the wider repository, prefer a non-English language when history mixes English with one non-English language, use the user's conversation language when history is broadly multilingual, fall back to a default localized format, optionally add GitHub issue-closing keywords supplied by the user, and execute safely. By default propose a plan and wait for approval; when the user explicitly delegates with phrases such as “按推荐提交”, “你决定并直接提交”, or “无需确认”, skip the displayed plan and make all recommended commits directly. Use when the user asks for git commit, commit changes, git 分步提交, 分批提交, staged commit cleanup, wants current changes committed with sensible messages, or asks a commit to close GitHub issues.
 ---
 
 # Git Step Commit
@@ -25,7 +25,18 @@ git rev-parse --show-toplevel
 git status --short --untracked-files=all
 git diff --stat
 git diff --cached --stat
-git log -12 --pretty=format:%s 2>/dev/null || true
+author_email="$(git config --get user.email || true)"
+author_name="$(git config --get user.name || true)"
+author_history=""
+if [ -n "$author_email" ]; then
+  author_history="$(git log --all -12 --author="$author_email" --pretty=format:%s 2>/dev/null || true)"
+fi
+if [ -z "$author_history" ] && [ -n "$author_name" ]; then
+  author_history="$(git log --all -12 --author="$author_name" --pretty=format:%s 2>/dev/null || true)"
+fi
+printf 'commit author: %s <%s>\nuser locale: %s\nauthor history:\n%s\nrepository history:\n' \
+  "$author_name" "$author_email" "${LC_ALL:-${LC_MESSAGES:-${LANG:-}}}" "$author_history"
+git log --all -12 --pretty=format:%s 2>/dev/null || true
 ```
 
 如果没有更改，直接说明并停止。规划阶段保持只读，不要执行 `git restore --staged .`。
@@ -34,9 +45,32 @@ git log -12 --pretty=format:%s 2>/dev/null || true
 
 - 已明确是本轮 agent 完成且修改意图已知时，不重复阅读正文。
 - 来源不明、包含用户已有修改、同一文件同时有暂存和未暂存更改，或意图不清时，再按需查看 `git diff -- <path>`、`git diff --cached -- <path>` 和相关文件。普通 diff 不显示未跟踪文件，准备提交前要直接检查其内容。
-- 从历史提交推断语言、前缀、scope、大小写和语气；历史不明确时使用简洁的 Conventional Commit（`feat`、`fix`、`refactor`、`test`、`docs`、`chore`）。用户指定的风格优先。
+- 按下节选择同一个历史层级来确定消息语言与格式风格，不要把不同层级的语言和格式混用。
 - 复用本轮已完成的测试结果；否则只运行必要且成本合理的验证。未运行时说明原因。
 - 默认不添加 `Co-authored-by:` 或任何 AI 署名；仅按用户本轮明确提供的署名添加。
+
+## 确定消息语言与风格
+
+用户明确指定完整消息、语言或格式时，对应要求始终优先。否则按以下顺序选择消息配置，命中后同时确定**自然语言**和**格式风格**：
+
+1. 优先按当前配置的 `user.email` 筛选作者历史；没有匹配时再按 `user.name` 筛选。存在本人历史时，同时沿用本人的提交语言、前缀、scope、大小写、标点和语气。
+2. 当前作者没有历史时，参考仓库整体历史，同时沿用仓库的主要语言和格式。忽略明显的 bot、合并和自动发布消息，除非仓库只有这类历史。
+3. 没有可用历史时，使用简洁的 Conventional Commit（`feat`、`fix`、`refactor`、`test`、`docs`、`chore`），摘要语言跟随用户。
+
+仅在第 3 级兜底时，从用户明确偏好、当前对话语言、已建立的对话语言、`LC_ALL`、`LC_MESSAGES`、`LANG` 依次判断摘要语言，仍不明确时默认英语。用户用中文交互则写中文摘要，用韩文交互则写韩文摘要。不要根据姓名、邮箱或国籍猜测语言；技术标识、文件名和 Conventional Commit 类型无需翻译。
+
+不要把不同层级混用。例如本人历史为中文 Conventional Commit 时，即使全仓近期多为英文，也继续使用本人的中文 Conventional Commit；只有本人完全没有历史时才整体切换到全仓配置。
+
+### 判断历史中的混合语言
+
+在已经选中的本人历史或全仓历史内，忽略 Conventional Commit 类型、scope、文件名、代码标识和 Issue 编号，再按每条摘要的自然语言判断：
+
+1. 只出现一种语言时，使用该语言。
+2. 英语与一种非英语语言混合时，优先使用该非英语语言，不要因少量英文提交切换成英语。例如 10 条中 7 条中文、3 条英文时使用中文。
+3. 出现多种非英语语言时，若一种语言明显占主导则使用该语言；否则视为广泛混合，改用用户当前与 AI 的对话语言。
+4. 无法可靠识别语言时，也使用用户当前与 AI 的对话语言。
+
+混合语言只改变摘要语言，不改变历史层级。前缀、scope、大小写、标点和语气仍从已经选中的本人历史或全仓历史推断。
 
 ## 默认模式：提交计划
 
@@ -46,6 +80,7 @@ git log -12 --pretty=format:%s 2>/dev/null || true
 建议提交计划：
 变更来源：本轮 agent 修改 / 用户已有修改 / 混合 / 不确定
 验证状态：已运行 <command> / 建议先运行 <command> / 未运行，原因：...
+消息配置：<语言 + 格式简述>（依据：用户指定 / 本人历史 / 仓库历史 / 默认格式 + 用户语言）
 协作者：默认不添加
 Issue：默认不关闭；如需在提交进入默认分支后自动关闭，请回复编号（如 #12、#34；多批提交可注明对应批次）。
 执行方式：确认后用一次命令链完成全部批次
