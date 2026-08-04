@@ -1,4 +1,4 @@
 interface:
   display_name: "Manage PRD Docs"
-  short_description: "Automatically maintain PRDs through delivery"
-  default_prompt: "Use $manage-prd-docs to manage this product requirement automatically from discussion through implementation and PRD closure."
+  short_description: "Maintain current, planned, and active PRDs"
+  default_prompt: "Use $manage-prd-docs to manage this requirement across current decisions, future plans, implementation, and completion."
