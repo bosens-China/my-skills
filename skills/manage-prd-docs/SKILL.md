@@ -1,20 +1,22 @@
 ---
 name: manage-prd-docs
-description: "Discuss, materialize, and maintain current product decisions in docs/PRD.md plus temporary feature PRD and Todo workspaces under docs/work/. Use when the user asks to 讨论需求、讨论产品、讨论 PRD、更新需求、落盘, finalize or revise a PRD, plan product work, close a completed requirement, or migrate legacy phased PRD documents. Trigger during discussion, but write only after requirements are mature and the user explicitly authorizes the initial landing."
+description: "Automatically manage the full lifecycle of product requirements in docs/PRD.md and temporary feature workspaces under docs/work/. Use whenever the conversation discusses, clarifies, changes, plans, implements, or completes a product requirement or PRD, including 讨论需求、讨论产品、更新需求、落盘、实现需求、收口需求, or migrating legacy phased PRD documents. Enter the workflow implicitly, materialize mature requirements without waiting for a special command, and automatically merge and clean up completed work after implementation is verified."
 ---
 
 # Manage PRD Docs
 
 围绕产品需求进行讨论，把长期有效的产品决策维护为现行 PRD，并用临时工作目录承载进行中的需求。
 
-## 区分讨论与落盘
+## 自动推进需求生命周期
 
-- 用户提到讨论需求、产品、PRD、更新需求或落盘时，进入本工作流。
-- 触发技能不等于允许写文件。需求未成型时只继续讨论，不创建或修改文档。
-- 判断需求是否成型：目标、范围、核心需求和验收标准已经明确，且不存在会改变实施方向的关键未决项。
-- 首次落盘必须等待用户明确说“落盘”“写入”“定稿”或同等指令。即使用户要求落盘，需求仍未成型时也先指出缺口。
-- 已有本技能维护的文档后，直接同步用户已经确认的变更；探索性想法和未定案内容不写入。无法判断是否确认时先询问。
-- 迁移旧文档或删除完成的工作目录前，取得用户明确授权。
+- 检测到用户在讨论、澄清、变更、计划、实现或完成产品需求时，立即进入本工作流，不要等待用户说“讨论需求”“落盘”或“合并 PRD”。
+- 先判断需求是否成型：目标、范围、核心需求和可验证的验收标准已经明确，且不存在会改变产品或实施方向的关键未决项。
+- 需求未成型时继续讨论，只询问对方向有实质影响的问题；不为低风险细节阻塞推进。
+- 需求成型后立即创建或更新 `docs/work/<feature-name>/`，不再请求额外的落盘授权。在进度更新或最终回复中简短告知用户已自动落盘。
+- 只写入已经明确的当前结论；尚在比较的方案、随口设想和无法判断是否确认的内容暂不写入。
+- 实现过程中持续同步 PRD 和 Todo。当本轮需求的实现、验证和必要文档全部完成时，主动收口，不等待用户再说“合并 PRD”。
+- 把纯讨论或 PRD 编写任务的结束与实现完成区分开：前者保留 `docs/work/`；部分实现、验证失败、存在阻塞或仍有未决项时也保留。
+- 只自动删除本轮已完成需求对应的精确工作目录。迁移或删除旧 Phase、历史 PRD 和其他非本轮临时文档前，仍取得用户明确授权。
 
 ## 识别文档约定
 
@@ -70,7 +72,7 @@ docs/
 
 ## 维护进行中需求
 
-为已经获准落盘的新需求创建 `docs/work/<feature-name>/`，使用稳定的英文 slug 命名。
+为已经成型的新需求自动创建 `docs/work/<feature-name>/`，使用稳定的英文 slug 命名。
 
 在 `PRD.md` 中写明：
 
@@ -90,6 +92,7 @@ docs/
 
 - 只写可验证的已确认内容，不写 `TBD`、猜测或未定方案。
 - 使用 `TODO.md` 维护当前实施任务，以 `- [ ]` 和 `- [x]` 表示状态，并按合理实施顺序排列。
+- 开始实现时不另等待用户下达文档维护指令；每完成一项就同步勾选 Todo，需求改变时同步修改 PRD。
 - 需求变化时直接把 PRD 和 Todo 更新为当前有效内容，不用删除线维护文档内变更日志。
 - 开发期间可以保留已完成任务用于观察进度；需求收口后删除整个工作目录。
 - 如果现行产品决策并未改变，不要把施工过程提前写入总 PRD。
@@ -124,7 +127,14 @@ docs/
 
 ## 收口完成的需求
 
-不要仅因 Todo 全部勾选就自动收口。用户确认功能完成或明确要求收口后：
+在每次实现任务结束前主动判断对应需求是否已经完成，不等待用户确认或发出收口指令。Todo 全部勾选是必要证据，但不是唯一证据。只有同时满足以下条件时自动收口：
+
+- 已完成进行中 PRD 定义的全部范围，没有被无声遗漏的有效需求。
+- 相关测试、检查或其他合理验证已通过。
+- 需要同步的用户文档、API、配置或操作说明已经更新。
+- Todo 全部完成，且没有阻塞项、失败验证或会影响交付的未决问题。
+
+满足条件后立即执行：
 
 1. 对照进行中 PRD、实现、测试和用户文档，确认没有未处理或仍未决的内容。
 2. 把仍长期成立的行为、原因和边界合并到 `docs/PRD.md` 或对应领域 PRD。
@@ -132,8 +142,9 @@ docs/
 4. 把尚未完成但仍有效的工作移入新的进行中需求，不要无声丢弃。
 5. 更新 `docs/index.md`；仅当索引由本工作流创建、未被仓库约定引用且只剩单一 PRD 时才可以删除。
 6. 删除已完成需求的整个 `docs/work/<feature-name>/`，不保留验收快照、完成 Todo 或临时调研档案。
+7. 在最终回复中告知用户已自动合并的长期决策和已删除的工作目录。
 
-如果仍在实现的行为是否属于稳定承诺尚不明确，先请用户明确，再合并或删除对应内容。
+任一条件不满足时不要假定已完成，保留工作目录，更新 Todo 为真实状态，并说明剩余工作或阻塞。如果一项尚在实现的行为是否属于稳定承诺会改变合并结果，先请用户明确。
 
 ## 迁移旧 Phase 文档
 
@@ -167,10 +178,12 @@ docs/
 
 ## 完成检查
 
-- 只写入已确认且成型的需求。
+- 已在需求讨论开始时自动进入工作流，没有要求用户记住阶段口令。
+- 只写入已明确且成型的需求，并在成型后自动落盘。
 - `docs/PRD.md` 只表达当前有效的产品决策。
 - `docs/work/` 只包含真正进行中的需求。
-- 完成需求的长期决策已回填，临时工作目录已按授权删除。
+- 已完成实现的需求已自动回填长期决策，并删除对应临时工作目录。
+- 纯讨论、部分实现、验证失败或仍有阻塞的需求没有被过早收口。
 - API、配置和使用细节位于其权威文档，PRD 没有重复维护。
 - `docs/index.md` 只在需要导航时存在，且没有失效链接。
 - 旧 Phase 文档没有未经判断地被拼接或删除。
