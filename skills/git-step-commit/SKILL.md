@@ -1,6 +1,6 @@
 ---
 name: git-step-commit
-description: Analyze Git changes, split them into coherent commits, infer message language and format, optionally close supplied GitHub issues, and execute safely. Manage persistent global or repository preferences for review versus direct submission and automatic or specified commit-message language through native Git config. Use when the user asks to commit, review or batch Git changes, configure/show/delete commit preferences, 设置提交偏好、按推荐提交、指定提交语言, or close issues through commits.
+description: Analyze Git changes, split them into coherent commits, infer message language and format, optionally close supplied GitHub issues, and execute safely. Manage persistent global or repository preferences for review versus direct submission and automatic or specified commit-message language through native Git config. Safely synchronize and push branches by pulling with rebase by default and helping resolve rebase conflicts. Use when the user asks to commit, review or batch Git changes, push or publish a branch, commit and push, configure/show/delete commit preferences, 设置提交偏好、按推荐提交、推送远程、提交后推送、指定提交语言, or close issues through commits.
 ---
 
 # Git Step Commit
@@ -171,6 +171,64 @@ Issue：默认不关闭；如需在提交进入默认分支后自动关闭，请
 
 用户确认全部或说“按推荐提交”后直接执行；只确认部分时只提交指定批次，其他更改保持不动。
 
+## 远程同步与推送
+
+只有用户明确要求“推送”“发布分支”“提交后推送”或等价操作时才推送；普通提交、提交计划和只查看状态都不隐式推送。“按推荐提交并推送”表示先完成已确认的提交批次，再执行本节流程。
+
+### 目标与前置检查
+
+- 只推送当前分支；处于 detached HEAD 时先询问目标分支。用户明确给出的远程和分支优先于推断。
+- 未指定目标时，使用当前分支已有的 upstream；没有 upstream 时，仅在存在 `origin` 且当前本地分支名可用时默认使用 `origin/<当前分支>`。没有可唯一确定的远程或目标分支时先询问，不要猜测。
+- 推送前先确认没有正在进行的 merge、rebase、cherry-pick 或未解决冲突。若只是推送且工作树有未提交更改，不要自动暂存、提交或 stash；先说明这些更改会阻止安全同步并等待用户决定。
+- 明确推送授权同时授权为同步该目标分支执行一次 `git pull --rebase`；这只是将本地尚未推送的提交重放到最新远端分支上，不授权 amend、交互式 rebase、`rebase --abort`、改写已发布提交或任何 force push。
+- 标签、删除远程分支和非分支 refspec 不适用默认拉取/rebase 流程；确认其精确意图后执行相应的普通推送，仍不得 force push，除非用户明确要求。
+
+先用只读命令核对当前分支、upstream、远程和工作树；不要根据 `git remote -v` 的推送 URL 推断一个不同的拉取分支：
+
+```bash
+git status --short
+git branch --show-current
+git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}' 2>/dev/null || true
+git remote
+git status --porcelain=v2 --branch
+```
+
+### 默认分支推送流程
+
+已有 upstream 时，先拉取并以 rebase 方式同步，再执行普通推送：
+
+```bash
+git pull --rebase && git push
+```
+
+没有 upstream 但已确定为 `origin/<当前分支>` 时，先检查远端是否已有同名分支。分支存在时先同步；分支不存在时没有可拉取的目标，直接建立 upstream：
+
+```bash
+git ls-remote --exit-code --heads origin "refs/heads/<当前分支>" \
+  && git pull --rebase origin "<当前分支>" \
+  && git push -u origin "HEAD:<当前分支>"
+```
+
+若 `ls-remote` 表明远端分支不存在，则执行 `git push -u origin "HEAD:<当前分支>"`。不要使用 `--force`、`--force-with-lease`、`push --mirror` 或裸 `git push` 去推送尚未核对的目标。同步或推送成功后报告远程、分支、是否建立 upstream，以及最终 HEAD 的短 hash。
+
+如果正常推送因远端在同步后再次前进而被拒绝，重新检查工作树后再运行一次同样的 `git pull --rebase` 与 `git push`。第二次仍被拒绝时停止并报告，不要循环重试或改用强推。
+
+### Rebase 冲突处理
+
+`git pull --rebase` 产生冲突时立即停止推送链，不要启动另一场 rebase，也不要丢弃冲突现场。先检查冲突范围和正在重放的提交：
+
+```bash
+git status --short
+git diff --name-only --diff-filter=U
+git rebase --show-current-patch
+git diff -- <冲突文件>
+```
+
+- 说明冲突的提交、文件，以及两边更改的语义；不要只凭 `ours`/`theirs` 标签猜测正确内容。
+- 能从本轮变更、测试和上下文明确判断时，编辑为保留双方意图的结果，运行相关验证，`git add -- <已解决文件>`，再执行 `git rebase --continue`；随后重新执行普通 `git push`。
+- 冲突意图不明确、涉及用户已有更改、凭据、生成文件或删除选择时，展示可选方案并询问用户，不要擅自选择。
+- 不要运行 `git rebase --abort`、`git reset --hard`、`git checkout -- <path>`、`git clean` 或强推来绕过冲突，除非用户明确要求。若 `rebase --continue` 失败，保留现场并报告错误后再处理。
+
 ## 关闭 GitHub Issues
 
 - 默认不关闭 Issue。只使用用户明确给出的编号，不根据 diff、分支名或提交内容猜测。
@@ -235,8 +293,8 @@ git status --short
 
 ## 安全与结果
 
-- 不要使用会丢弃内容的 `git reset --hard`、`git checkout -- <path>`、`git clean`，也不要 amend、rebase、改写历史或 force push，除非用户明确要求。
+- 不要使用会丢弃内容的 `git reset --hard`、`git checkout -- <path>`、`git clean`，也不要 amend、交互式 rebase、改写历史或 force push，除非用户明确要求；用户明确推送时，本节规定的 `git pull --rebase` 是唯一默认例外。
 - 不要提交密钥、凭据、本地缓存、编辑器文件或非预期构建产物。
 - 如果 hook 修改文件，检查新增 diff；属于当前批次时重新暂存并重试，否则保持未提交。
 - 配置操作完成后报告被修改或删除的作用域、字段、有效值及来源；不要回显无关的 Git 配置。
-- 完成后列出每个提交的短 hash 和消息，并说明剩余未提交文件、是否只提交了部分批次，以及测试结果或未运行原因。
+- 完成后列出每个提交的短 hash 和消息，并说明剩余未提交文件、是否只提交了部分批次，以及测试结果或未运行原因。若发生推送，额外说明远程/分支、同步方式和最终结果；若未推送，说明原因。
