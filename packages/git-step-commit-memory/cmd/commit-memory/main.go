@@ -131,9 +131,10 @@ func (tool app) record(repo string) (map[string]any, error) {
 	if err != nil {
 		return nil, err
 	}
-	if state.RecommendedSuccesses < threshold {
-		state.RecommendedSuccesses++
+	if state.RecommendedSuccesses == threshold {
+		return projectResult(p, true, false, state.RecommendedSuccesses), nil
 	}
+	state.RecommendedSuccesses++
 	if err := writeJSON(p.stateFile, state); err != nil {
 		return nil, err
 	}

@@ -32,6 +32,10 @@ func TestLifecycle(t *testing.T) {
 	if status["learned_mode"] != "direct" {
 		t.Fatalf("expected direct: %v", status)
 	}
+	result := mustRun(t, []string{"record-direct", "--repo", repo}, stateDir)
+	if result["recorded"] != false || result["recommended_successes"] != threshold {
+		t.Fatalf("record after learning should be a no-op: %v", result)
+	}
 	mustRun(t, []string{"disable"}, stateDir)
 	status = mustRun(t, []string{"status", "--repo", repo}, stateDir)
 	if status["enabled"] != false || status["learned_mode"] != "direct" {
