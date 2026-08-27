@@ -1,6 +1,6 @@
 ---
 name: git-step-commit
-description: Review Git changes, organize and create coherent commits, manage commit preferences, and safely synchronize and push branches. Use for 提交、按推荐提交、审查提交计划、提交并推送、设置提交偏好、指定提交语言, or closing supplied GitHub issues through commits.
+description: Review Git changes, organize and create coherent commits, manage explicit and learned commit preferences, and safely synchronize and push branches. Use for 提交、按推荐提交、审查提交计划、提交并推送、设置或个性化提交偏好、指定提交语言, or closing supplied GitHub issues through commits.
 ---
 
 # Git Step Commit
@@ -9,12 +9,15 @@ description: Review Git changes, organize and create coherent commits, manage co
 
 ## 偏好与优先级
 
-分别解析提交模式和消息语言，优先级均为：
+提交模式按以下优先级解析：
 
 1. 当前对话中用户最近一次明确指定
 2. 当前仓库配置
 3. 全局 Git 配置
-4. 内置默认
+4. 当前项目的个性化记忆
+5. 内置默认
+
+消息语言不使用个性化记忆，优先级仍为当前对话、当前仓库配置、全局 Git 配置、内置默认。
 
 对话偏好在后续请求中继续生效，但不写入 Git 配置；用户重新指定时覆盖。只有用户明确说“仅这次”时才不延续。不要把一次确认某个计划误记为长期偏好。
 
@@ -31,7 +34,7 @@ description: Review Git changes, organize and create coherent commits, manage co
 
 “提交并推送”本身不算用户明确指定模式，也不形成对话偏好；仅当按上述优先级得到的有效模式为 `default` 时，本次按 `direct`（推荐模式）执行。
 
-每次提交前静默读取本地和全局配置。项目级 `default`/`auto` 是明确值，会阻止继续回退。无效配置不执行，报告问题与来源。
+每次提交前静默读取本地、全局配置和个性化记忆状态。项目级或全局的 `default`/`auto` 是明确值，会阻止继续回退；只有提交模式在两层配置中均缺失时，才允许个性化记忆参与。无效配置不执行，报告问题与来源。
 
 用户要求设置、查看或删除持久偏好时，只操作 Git 配置，不检查或提交工作树：
 
@@ -40,6 +43,38 @@ description: Review Git changes, organize and create coherent commits, manage co
 - 写入使用 `--replace-all`，删除使用 `--unset-all` 或 `--remove-section`
 
 修改前必须知道作用域，只改用户指定字段，完成后读回验证。读取偏好但未指定作用域时，显示有效值及来源。
+
+## 个性化记忆
+
+个性化记忆是用户选择启用的项目级推断状态，只学习提交模式 `direct`，不写入 Git 配置。使用 `scripts/` 下匹配当前操作系统和 CPU 架构的 `commit-memory-*` 二进制管理；Linux/macOS 首次运行前确保二进制可执行。状态写入 `${XDG_STATE_HOME:-$HOME/.local/state}/git-step-commit`；若设置 `GIT_STEP_COMMIT_STATE_DIR`，则使用该目录。不要手工拼接、改写或读取状态 JSON。
+
+二进制对应关系：
+
+- Windows amd64：`commit-memory-windows-amd64.exe`
+- Linux amd64：`commit-memory-linux-amd64`
+- Linux arm64：`commit-memory-linux-arm64`
+- macOS amd64：`commit-memory-darwin-amd64`
+- macOS arm64：`commit-memory-darwin-arm64`
+
+用户要求开启、关闭、查看或忘记个性化记忆时，只执行相应脚本命令，不检查或提交工作树：
+
+```text
+<memory-bin> enable
+<memory-bin> disable
+<memory-bin> status --repo <repo>
+<memory-bin> record-direct --repo <repo>
+<memory-bin> forget --repo <repo>
+```
+
+记忆默认关闭。`disable` 保留已有项目状态但停止读取和学习；`forget` 只删除当前项目的状态。状态缺失、关闭或尚未达到阈值时不产生模式偏好。达到阈值后，模式为 `direct`，来源显示为“本项目个性化记忆”。
+
+一次提交请求结束后，只有同时满足以下条件才运行 `record-direct`，并且一次请求最多记录一次：
+
+- 用户在本次请求中明确说“按推荐提交”“直接提交”或“无需确认”
+- 至少一个提交实际成功
+- 用户没有说“仅这次”
+
+不要记录对审查计划的确认、仅由先前对话偏好延续的 `direct`、由 Git 配置得到的 `direct`、由“提交并推送”特殊规则得到的 `direct`，或失败及未执行的提交。脚本累计三次合格成功后才学习 `direct`。写入失败不改变已经完成的 Git 结果，应分别准确报告。
 
 ## 分析与审查报告
 

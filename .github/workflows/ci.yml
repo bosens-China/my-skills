@@ -6,10 +6,14 @@ on:
       - main
     paths:
       - packages/file-line-audit/**
+      - packages/git-step-commit-memory/**
+      - skills/git-step-commit/**
       - .github/workflows/ci.yml
   pull_request:
     paths:
       - packages/file-line-audit/**
+      - packages/git-step-commit-memory/**
+      - skills/git-step-commit/**
       - .github/workflows/ci.yml
   workflow_dispatch:
 
@@ -35,8 +39,12 @@ jobs:
           cache: true # 开启 Go 依赖缓存
           cache-dependency-path: packages/file-line-audit/go.sum
 
-      - name: Run tests
+      - name: Test file-line-audit
         working-directory: packages/file-line-audit
+        run: go test -v ./...
+
+      - name: Test git-step-commit-memory
+        working-directory: packages/git-step-commit-memory
         run: go test -v ./...
 
   refresh-skill-binaries:
@@ -59,7 +67,9 @@ jobs:
       - name: Rebuild packaged binaries
         run: |
           chmod +x ./packages/file-line-audit/scripts/build-skill.sh
+          chmod +x ./packages/git-step-commit-memory/scripts/build-skill.sh
           ./packages/file-line-audit/scripts/build-skill.sh
+          ./packages/git-step-commit-memory/scripts/build-skill.sh
 
       - name: Commit and Push changes
         run: |
