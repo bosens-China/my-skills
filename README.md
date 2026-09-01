@@ -6,7 +6,7 @@
 
 | 技能                                                         | 作用                                                             |
 | ------------------------------------------------------------ | ---------------------------------------------------------------- |
-| [apply-yliu-frontend-practices](./skills/apply-yliu-frontend-practices/) | 应用 Yliu 的前端个人实践，规范请求、Hooks、路由、反馈、状态、样式和测试。 |
+| [apply-yliu-product-development-practices](./skills/apply-yliu-product-development-practices/) | 应用 Yliu 的产品开发方法论，覆盖项目、架构、实现、数据、界面、测试和运行。 |
 | [chinese-article-writing](./skills/chinese-article-writing/) | 规范中文技术文章、博客和技术分享的结构、语气、术语、标点与排版。 |
 | [dogecloud-oss](./skills/dogecloud-oss/)                     | 编写多吉云 OSS SDK、文件上传、图床和文件管理接入代码。            |
 | [file-line-audit](./skills/file-line-audit/)                 | 扫描仓库中的源码文件，找出达到指定行数阈值的超长文件。           |
