@@ -1,0 +1,17 @@
+{
+  "name": "yliu-marketplace",
+  "owner": {
+    "name": "Yliu",
+    "url": "https://github.com/bosens-China"
+  },
+  "description": "Yliu 的可复用 Agent Skills",
+  "version": "{{VERSION}}",
+  "plugins": [
+    {
+      "name": "yliu-skills",
+      "source": "./plugins/yliu-skills",
+      "description": "产品开发、写作、发布与工程维护工作流",
+      "version": "{{VERSION}}"
+    }
+  ]
+}

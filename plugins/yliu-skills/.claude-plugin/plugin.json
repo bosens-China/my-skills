@@ -1,0 +1,18 @@
+{
+  "name": "yliu-skills",
+  "displayName": "Yliu Skills",
+  "version": "0.3.0",
+  "description": "Reusable product development, writing, publishing, and engineering workflows.",
+  "author": {
+    "name": "Yliu"
+  },
+  "homepage": "https://github.com/bosens-China/my-skills",
+  "repository": "https://github.com/bosens-China/my-skills",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "development",
+    "writing",
+    "workflow"
+  ]
+}

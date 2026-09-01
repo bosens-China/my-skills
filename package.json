@@ -6,6 +6,8 @@
   "license": "MIT",
   "scripts": {
     "test": "go -C packages/file-line-audit test ./... && go -C packages/git-step-commit-memory test ./...",
+    "plugins:build": "node scripts/build-platform-plugins.mjs",
+    "plugins:check": "node scripts/validate-platform-plugins.mjs",
     "line:audit": "go -C packages/file-line-audit run ./cmd/line-audit",
     "commit:memory": "go -C packages/git-step-commit-memory run ./cmd/commit-memory",
     "build:file-line-audit": "powershell -ExecutionPolicy Bypass -File ./packages/file-line-audit/scripts/build-skill.ps1"

@@ -7,13 +7,29 @@ on:
     paths:
       - packages/file-line-audit/**
       - packages/git-step-commit-memory/**
-      - skills/git-step-commit/**
+      - skills/**
+      - platforms/**
+      - scripts/build-platform-plugins.mjs
+      - scripts/validate-platform-plugins.mjs
+      - package.json
+      - .agents/plugins/marketplace.json
+      - .cursor-plugin/marketplace.json
+      - .claude-plugin/marketplace.json
+      - plugins/yliu-skills/**
       - .github/workflows/ci.yml
   pull_request:
     paths:
       - packages/file-line-audit/**
       - packages/git-step-commit-memory/**
-      - skills/git-step-commit/**
+      - skills/**
+      - platforms/**
+      - scripts/build-platform-plugins.mjs
+      - scripts/validate-platform-plugins.mjs
+      - package.json
+      - .agents/plugins/marketplace.json
+      - .cursor-plugin/marketplace.json
+      - .claude-plugin/marketplace.json
+      - plugins/yliu-skills/**
       - .github/workflows/ci.yml
   workflow_dispatch:
 
@@ -39,6 +55,11 @@ jobs:
           cache: true # 开启 Go 依赖缓存
           cache-dependency-path: packages/file-line-audit/go.sum
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
       - name: Test file-line-audit
         working-directory: packages/file-line-audit
         run: go test -v ./...
@@ -47,7 +68,13 @@ jobs:
         working-directory: packages/git-step-commit-memory
         run: go test -v ./...
 
-  refresh-skill-binaries:
+      - name: Build multi-platform plugin
+        run: npm run plugins:build
+
+      - name: Validate multi-platform plugin
+        run: npm run plugins:check
+
+  refresh-generated-files:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: test
     runs-on: ubuntu-latest
@@ -64,6 +91,11 @@ jobs:
           cache: true
           cache-dependency-path: packages/file-line-audit/go.sum
 
+      - name: Setup Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+
       - name: Rebuild packaged binaries
         run: |
           chmod +x ./packages/file-line-audit/scripts/build-skill.sh
@@ -71,12 +103,19 @@ jobs:
           ./packages/file-line-audit/scripts/build-skill.sh
           ./packages/git-step-commit-memory/scripts/build-skill.sh
 
+      - name: Rebuild multi-platform plugin
+        run: |
+          base_version="$(node -p "require('./package.json').version.split('+')[0]")"
+          plugin_version="${base_version}+git.${GITHUB_SHA::12}"
+          node scripts/build-platform-plugins.mjs --version "${plugin_version}"
+          node scripts/validate-platform-plugins.mjs
+
       - name: Commit and Push changes
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           
-          # 提交所有变更（包括二进制文件和可能的 go.sum 更新）
+          # 提交二进制文件和多平台插件生成结果
           git add .
           
           # 检查是否有文件变更
@@ -85,7 +124,7 @@ jobs:
             exit 0
           fi
           
-          git commit -m "chore(ci): refresh packaged skill binaries [skip ci]"
+          git commit -m "chore(ci): refresh generated files [skip ci]"
           
           # 此时工作区已干净，可以安全地 rebase
           git pull --rebase origin main

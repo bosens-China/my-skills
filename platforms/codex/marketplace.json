@@ -1,0 +1,20 @@
+{
+  "name": "yliu-marketplace",
+  "interface": {
+    "displayName": "Yliu Plugins"
+  },
+  "plugins": [
+    {
+      "name": "yliu-skills",
+      "source": {
+        "source": "local",
+        "path": "./plugins/yliu-skills"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

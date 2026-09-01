@@ -17,9 +17,27 @@
 
 ## 使用方式
 
+通过 Skills CLI 安装，并按提示选择需要使用的平台：
+
 ```sh
 npx skills add bosens-China/my-skills
 ```
+
+也可以作为 Codex marketplace 安装：
+
+```sh
+codex plugin marketplace add bosens-China/my-skills
+codex plugin add yliu-skills@yliu-marketplace
+```
+
+Claude Code 可以从同一仓库安装：
+
+```sh
+claude plugin marketplace add bosens-China/my-skills
+claude plugin install yliu-skills@yliu-marketplace
+```
+
+Cursor 团队可以在 Dashboard 的 Plugins 页面把这个仓库导入 Team Marketplace。Antigravity 当前直接使用仓库中的通用 `skills/`。
 
 ## 协议
 

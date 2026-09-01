@@ -1,0 +1,36 @@
+{
+  "name": "yliu-skills",
+  "version": "0.3.0",
+  "description": "Yliu's reusable product development, writing, publishing, and engineering workflows.",
+  "author": {
+    "name": "Yliu",
+    "url": "https://github.com/bosens-China"
+  },
+  "homepage": "https://github.com/bosens-China/my-skills",
+  "repository": "https://github.com/bosens-China/my-skills",
+  "license": "MIT",
+  "keywords": [
+    "agent-skills",
+    "development",
+    "writing",
+    "workflow"
+  ],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Yliu Skills",
+    "shortDescription": "可复用的产品开发、写作与工程工作流",
+    "longDescription": "Yliu 在产品开发、中文写作、发布和工程维护中的实践沉淀。",
+    "developerName": "Yliu",
+    "category": "Productivity",
+    "capabilities": [
+      "Development",
+      "Writing",
+      "Workflow"
+    ],
+    "defaultPrompt": [
+      "按照 Yliu 的产品开发方法论实现这个需求。",
+      "帮我规范并润色这篇中文技术文章。",
+      "分析当前改动并给出分步提交计划。"
+    ]
+  }
+}
