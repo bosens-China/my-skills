@@ -5,13 +5,13 @@
     "url": "https://github.com/bosens-China"
   },
   "description": "Yliu 的可复用 Agent Skills",
-  "version": "0.3.0",
+  "version": "0.3.0+git.9c5aaff2dc27",
   "plugins": [
     {
       "name": "yliu-skills",
       "source": "./plugins/yliu-skills",
       "description": "产品开发、写作、发布与工程维护工作流",
-      "version": "0.3.0"
+      "version": "0.3.0+git.9c5aaff2dc27"
     }
   ]
 }
