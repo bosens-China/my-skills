@@ -30,11 +30,11 @@ description: "Apply Yliu's product development practices when creating or changi
 
 ## 按需读取规范
 
-- 涉及目标用户、设备与主题范围、项目初始化、端口、包管理、Monorepo、技术选型、别名或社区方案时，读取 [project-and-architecture.md](references/project-and-architecture.md)。
+- 涉及目标用户、设备与主题范围、项目初始化、端口、包管理、Monorepo、Git hook、`.gitattributes`、技术选型、别名或社区方案时，读取 [project-and-architecture.md](references/project-and-architecture.md)。
 - 涉及 TypeScript、注释、Hook、Composable、组件抽象或代码复用时，读取 [implementation-practices.md](references/implementation-practices.md)。
 - 涉及接口、请求、路由、页面数据、Loading、错误反馈、危险操作或样式时，读取 [requests-routing-and-ui.md](references/requests-routing-and-ui.md)。
 - 涉及数据库、ORM、数据验证、统一响应、Swagger、时间、环境变量、后端日志或生产编排时，读取 [backend-data-and-runtime.md](references/backend-data-and-runtime.md)。
-- 涉及测试、类型检查、Lint、构建或完成后的验证时，读取 [testing-and-validation.md](references/testing-and-validation.md)。
+- 涉及测试、类型检查、Lint、格式化、构建或完成后的验证时，读取 [testing-and-validation.md](references/testing-and-validation.md)。
 
 一个任务涉及多个方面时，读取所有相关规范。普通任务不需要为了了解全貌而加载全部文件。
 
